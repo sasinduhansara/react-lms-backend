@@ -6,27 +6,34 @@ import jwt from 'jsonwebtoken';
 //--------------------------- user registration--------------------------- 
 
 export const registerUser = async (req, res) => {
-  const { firstName, lastName, email, password, role } = req.body;
-  const passHash = bcrypt.hashSync(password, 10);
-  const newUser = new User({
-    firstName,
-    lastName,
-    email,
-    passwordHash: passHash,
-    role
-  });
 
-  try {
-    await newUser.save();
-    res.status(201).json({ message: 'User registered successfully' });
 
-  } 
 
-  catch (error) {
-    console.log(error);
-    res.status(400).json({ message: 'Registration failed', error: error.message });
-  }
+    const { userId, firstName, lastName, department, email, password, role } = req.body;
+    const passHash = bcrypt.hashSync(password, 10);
+    const newUser = new User({
+      userId,
+      firstName,
+      lastName,
+      department,
+      email,
+      passwordHash: passHash,
+      role
+    });
+
+    try {
+      await newUser.save();
+      res.status(201).json({ message: 'User registered successfully' });
+
+    } 
+
+    catch (error) {
+      console.log(error);
+      res.status(400).json({ message: 'Registration failed', error: error.message });
+    }
+
 };
+
 
 //--------------------------- user login--------------------------- 
 
@@ -51,8 +58,10 @@ export const loginUser = async (req, res) => {
       res.status(400).json({ message: 'Invalid password' });
     } else {
       const payload = {
+        userId: user.userId,
         firstName: user.firstName,
         lastName: user.lastName,
+        department: user.department,
         email: user.email,
         role: user.role
       };
@@ -146,7 +155,7 @@ export const updateUser = async (req, res) => {
     }
     
     // Extract update fields from request body
-    const { firstName, lastName, email, password, role } = req.body;
+    const { userId, firstName, lastName, departmentId, email, password, role } = req.body;
     
     // Only allow role updates if the requesting user is an admin
     if (role && requestingUserRole !== 'admin') {
@@ -156,8 +165,10 @@ export const updateUser = async (req, res) => {
     }
     
     // Update user fields if provided
+    if (userId) user.userId = userId;
     if (firstName) user.firstName = firstName;
     if (lastName) user.lastName = lastName;
+    if (departmentId) user.department = department;
     if (email) user.email = email;
     if (password) user.passwordHash = bcrypt.hashSync(password, 10);
     if (role && requestingUserRole === 'admin') user.role = role;
@@ -169,8 +180,10 @@ export const updateUser = async (req, res) => {
     res.status(200).json({
       message: "User updated successfully",
       user: {
+        userId: updatedUser.userId,
         firstName: updatedUser.firstName,
         lastName: updatedUser.lastName,
+        department: updatedUser.department,
         email: updatedUser.email,
         role: updatedUser.role
       }
@@ -184,3 +197,29 @@ export const updateUser = async (req, res) => {
     });
   }
 };
+
+
+//--------------------------- get all user by email ---------------------------
+
+// Get all users (admin only)
+export const getAllUsers = async (req, res) => {
+  try {
+    // Check if the requesting user is an admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        message: "Unauthorized. Only admins can view all users."
+      });
+    }
+    
+    const users = await User.find({});
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch users",
+      error: error.message
+    });
+  }
+};
+
+
+

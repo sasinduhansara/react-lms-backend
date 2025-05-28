@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
+  userId: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   firstName: { 
     type: String, 
     required: true 
@@ -8,6 +13,12 @@ const userSchema = new mongoose.Schema({
   lastName: { 
     type: String, 
     required: true 
+  },
+  department: {
+    type: String,
+    required: function () {
+      return this.role === 'student' || this.role === 'lecturer';
+    }
   },
   email: { 
     type: String, 
@@ -23,9 +34,8 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'student', 'lecturer'], 
     required: true 
   }
-
 });
- 
-const User = mongoose.model('user', userSchema);
+
+const User = mongoose.model('User', userSchema);
 
 export default User;

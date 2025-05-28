@@ -6,6 +6,8 @@ import bodyParser from 'body-parser';
 import userRouter from './routes/userRoutes.js';
 import departmentRouter from './routes/departmentRoutes.js';
 import subjectRoutes from './routes/subjectRoutes.js';
+import newsRouter from './routes/newsRoutes.js';
+
 
 // import { authenticate } from './middleware/auth.js';
 dotenv.config();
@@ -35,6 +37,9 @@ mongoose.connect(connectionString)
 app.use("/api/users",userRouter)
 app.use("/api/departments",departmentRouter)
 app.use('/api/subjects', subjectRoutes);
+app.use('/api/news', newsRouter);
+
+
 
 app.listen(5000,(req,res) => {
   console.log('Server is running on port 5000');
