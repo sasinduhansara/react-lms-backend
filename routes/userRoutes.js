@@ -1,25 +1,53 @@
+// userRoutes.js
 
+
+import { authenticate, requireAdmin, requireSelfOrAdmin } from '../middleware/auth.js';
 import express from 'express';
 import {
-  loginUser,
-  registerUser,
-  deleteUserByEmail,
-  updateUser
-} from '../controllers/userController.js';
-import { authenticate } from '../middleware/auth.js';
+    registerUser,
+    loginUser,
+    getAllUsers,
+    getUsersByDepartment,
+    getUsersByRoleAndDepartment,
+    searchUsers,
+    getUserById,
+    getUserStats,
+    getAllAdmins,
+    getAllStudents,
+    getAllLecturers,
+    updateUser,
+    deleteUser
+   
+} from '../controllers/userController.js'; // Adjust path as needed
 
-const userRouter = express.Router();
+// Import your authentication middleware
 
-//user registration route
-userRouter.post('/', registerUser);
 
-// user login route
-userRouter.post('/login', loginUser);
+const router = express.Router();
 
-// user delete route 
-userRouter.delete('/admin/delete', authenticate, deleteUserByEmail);
+// Public routes (no authentication required)
+router.post('/register', registerUser);                          // POST /api/users/register
+router.post('/login', loginUser);                               // POST /api/users/login
 
-// user update route 
-userRouter.put('/update', authenticate, updateUser);
 
-export default userRouter;
+
+// GET Routes
+router.get('/', getAllUsers);                                    // GET /api/users
+router.get('/stats', getUserStats);                              // GET /api/users/stats
+router.get('/search', searchUsers);                              // GET /api/users/search
+router.get('/department/:department', getUsersByDepartment);     // GET /api/users/department/HNDIT
+router.get('/role/:role/department/:department', getUsersByRoleAndDepartment); // GET /api/users/role/student/department/HNDIT
+router.get('/:userId', getUserById);                             // GET /api/users/ST001
+router.get('/role/admins', getAllAdmins);                             // GET /api/users/admins
+router.get('/role/students', getAllStudents);                         // GET /api/users/students
+router.get('/role/lecturers', getAllLecturers);                       // GET /api/users/lecturers
+
+// PUT Routes
+router.put('/update',authenticate,requireAdmin, updateUser);                              
+
+
+// DELETE Routes
+router.delete('/:userId', authenticate, requireAdmin, deleteUser);
+
+
+export default router;

@@ -1,198 +1,181 @@
-import Subject from '../models/subject.js';
-import Department from '../models/department.js';
-import mongoose from 'mongoose';
+import Subject from "../models/subject.js";
+import Department from "../models/department.js";
+import mongoose from "mongoose";
 
-//---------------------------Create subject - Admin and Lecturer only---------------------------
-
+// Create subject - Admin and Lecturer only
 export const createSubject = async (req, res) => {
   try {
-    // Check if user has permission (admin or lecturer)
-    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'lecturer')) {
-      return res.status(403).json({ 
-        error: 'Unauthorized. Only admins and lecturers can create subjects.' 
+    // Check permissions
+    if (!["admin", "lecturer"].includes(req.user.role)) {
+      return res.status(403).json({
+        error: "Unauthorized. Only admins and lecturers can create subjects.",
       });
     }
-    
-    // Check if the provided department exists
-    const department = await Department.findOne({ departmentId: req.body.departmentId });
-    
+
+    // Validate department
+    const department = await Department.findOne({
+      departmentId: req.body.departmentId,
+    });
     if (!department) {
-      return res.status(404).json({ 
-        error: 'Department not found' 
-      });
+      return res.status(404).json({ error: "Department not found" });
     }
-    
-    // Create a new subject with department reference
-    const subjectData = {
+
+    // Create subject
+    const subject = await Subject.create({
       ...req.body,
-      department: department._id  // Set the reference to department ObjectId
-    };
-    
-    const subject = await Subject.create(subjectData);
-    
-    // Populate the department details in the response
-    const populatedSubject = await Subject.findById(subject._id)
-      .populate('department', 'departmentId name');
-    
+      department: department._id,
+    });
+
+    // Populate department details
+    const populatedSubject = await Subject.findById(subject._id).populate(
+      "department",
+      "departmentId name"
+    );
+
     res.status(201).json(populatedSubject);
   } catch (err) {
-    // Handle specific validation errors
-    if (err.name === 'ValidationError') {
-      const errors = Object.values(err.errors).map(e => e.message);
-      return res.status(400).json({ error: errors.join(', ') });
+    if (err.name === "ValidationError") {
+      const errors = Object.values(err.errors).map((e) => e.message);
+      return res.status(400).json({ error: errors.join(", ") });
     }
-    
-    // Handle duplicate key error
     if (err.code === 11000) {
-      return res.status(400).json({ 
-        error: 'Subject with this code already exists' 
-      });
+      return res.status(400).json({ error: "Subject code already exists" });
     }
-    
     res.status(400).json({ error: err.message });
   }
 };
 
-//---------------------------Get all subjects - Accessible to all authenticated users---------------------------
-
+// Get all subjects
 export const getAllSubjects = async (req, res) => {
   try {
-    const subjects = await Subject.find()
-      .populate('department', 'departmentId name');
-    
+    const { department, year, semester } = req.query;
+    let query = {};
+
+    if (department) {
+      const dept = await Department.findOne({ departmentId: department });
+      if (!dept) return res.status(404).json({ error: "Department not found" });
+      query.department = dept._id;
+    }
+
+    if (year) query.year = parseInt(year);
+    if (semester) query.semester = parseInt(semester);
+
+    const subjects = await Subject.find(query)
+      .populate("department", "departmentId name")
+      .sort({ year: 1, semester: 1, subjectCode: 1 });
+
     res.json(subjects);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Get subjects by department - Accessible to all authenticated users
+// Get subjects by department
 export const getSubjectsByDepartment = async (req, res) => {
   try {
     const { departmentId } = req.params;
-    
-    // Find the department first
     const department = await Department.findOne({ departmentId });
-    
+
     if (!department) {
-      return res.status(404).json({ 
-        error: 'Department not found' 
-      });
+      return res.status(404).json({ error: "Department not found" });
     }
-    
-    // Find subjects that belong to this department
+
     const subjects = await Subject.find({ department: department._id })
-      .populate('department', 'departmentId name');
-    
+      .populate("department", "departmentId name")
+      .sort({ year: 1, semester: 1, subjectCode: 1 });
+
     res.json(subjects);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// ---------------------------Get subjects by department, year and semester - Accessible to all authenticated users---------------------------
-
+// Get subjects by department, year and semester
 export const getSubjectsByYearSem = async (req, res) => {
   try {
     const { departmentId, year, semester } = req.params;
-    
-    // Find the department first
     const department = await Department.findOne({ departmentId });
-    
+
     if (!department) {
-      return res.status(404).json({ 
-        error: 'Department not found' 
-      });
+      return res.status(404).json({ error: "Department not found" });
     }
-    
-    // Find subjects that belong to this department, year and semester
-    const subjects = await Subject.find({ 
+
+    const subjects = await Subject.find({
       department: department._id,
       year: parseInt(year),
-      semester: parseInt(semester)
-    }).populate('department', 'departmentId name');
-    
+      semester: parseInt(semester),
+    })
+      .populate("department", "departmentId name")
+      .sort({ subjectCode: 1 });
+
     res.json(subjects);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-//---------------------------Update subject - Admin and Lecturer only---------------------------
-
+// Update subject
 export const updateSubject = async (req, res) => {
   try {
-    // Check if user has permission
-    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'lecturer')) {
-      return res.status(403).json({ 
-        error: 'Unauthorized. Only admins and lecturers can update subjects.' 
+    if (!["admin", "lecturer"].includes(req.user.role)) {
+      return res.status(403).json({
+        error: "Unauthorized. Only admins and lecturers can update subjects.",
       });
     }
-    
+
     const { subjectCode } = req.params;
-    
-    // Check if departmentId is being updated
-    if (req.body.departmentId) {
-      // Verify the department exists
-      const department = await Department.findOne({ departmentId: req.body.departmentId });
-      
-      if (!department) {
-        return res.status(404).json({ 
-          error: 'Department not found' 
-        });
-      }
-      
-      // Update the department reference
-      req.body.department = department._id;
+    const updateData = { ...req.body };
+
+    if (updateData.departmentId) {
+      const department = await Department.findOne({
+        departmentId: updateData.departmentId,
+      });
+      if (!department)
+        return res.status(404).json({ error: "Department not found" });
+      updateData.department = department._id;
     }
-    
+
     const subject = await Subject.findOneAndUpdate(
       { subjectCode },
-      req.body,
-      {
-        new: true,
-        runValidators: true,
-      }
-    ).populate('department', 'departmentId name');
-    
+      updateData,
+      { new: true, runValidators: true }
+    ).populate("department", "departmentId name");
+
     if (!subject) {
-      return res.status(404).json({ error: 'Subject not found' });
+      return res.status(404).json({ error: "Subject not found" });
     }
-    
+
     res.json(subject);
   } catch (err) {
-    if (err.name === 'ValidationError') {
-      const errors = Object.values(err.errors).map(e => e.message);
-      return res.status(400).json({ error: errors.join(', ') });
+    if (err.name === "ValidationError") {
+      const errors = Object.values(err.errors).map((e) => e.message);
+      return res.status(400).json({ error: errors.join(", ") });
     }
-    
     res.status(400).json({ error: err.message });
   }
 };
 
-//---------------------------Delete subject - Admin and Lecturer only---------------------------
-
+// Delete subject
 export const deleteSubject = async (req, res) => {
   try {
-    // Check if user has permission
-    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'lecturer')) {
-      return res.status(403).json({ 
-        error: 'Unauthorized. Only admins and lecturers can delete subjects.' 
+    if (!["admin", "lecturer"].includes(req.user.role)) {
+      return res.status(403).json({
+        error: "Unauthorized. Only admins and lecturers can delete subjects.",
       });
     }
-    
+
     const { subjectCode } = req.params;
-    
-    const subject = await Subject.findOneAndDelete({ subjectCode })
-      .populate('department', 'departmentId name');
-    
+    const subject = await Subject.findOneAndDelete({ subjectCode });
+
     if (!subject) {
-      return res.status(404).json({ error: 'Subject not found' });
+      return res.status(404).json({ error: "Subject not found" });
     }
-    
+
+    // TODO: Delete associated materials
+
     res.json({
-      message: 'Subject deleted successfully',
-      deletedSubject: subject
+      message: "Subject deleted successfully",
+      deletedSubject: subject,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
