@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken";
 
 //--------------------------- user registration---------------------------
 
+// userController.js - Fixed registerUser function
+
 export const registerUser = async (req, res) => {
   const { userId, firstName, lastName, department, email, password, role } =
     req.body;
