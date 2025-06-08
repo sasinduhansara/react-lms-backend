@@ -17,7 +17,7 @@ export const uploadMaterial = async (req, res) => {
     // Validate request body
     const { name, subject, path, url, type, size } = req.body;
 
-    if (!name || !subject || !path || !url || !type || !size) {
+    if (!name || !subject || !path || !url || !size) {
       return res.status(400).json({ error: "All fields are required" });
     }
 

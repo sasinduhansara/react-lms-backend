@@ -3,6 +3,7 @@ import LessonPart from "../models/lessonPart.js";
 
 // Create lesson
 export const createLesson = async (req, res) => {
+  console.log("Creating lesson with user:");
   try {
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).json({
@@ -10,10 +11,12 @@ export const createLesson = async (req, res) => {
       });
     }
 
+    console.log("Creating lesson with user:", req.body);
+
     const { title, description, department, subject, totalParts, type } =
       req.body;
 
-    if (!title || !department || !subject || !totalParts || !type) {
+    if (!title || !department || !subject || !totalParts) {
       return res.status(400).json({
         error: "Title, department, subject, totalParts, and type are required",
       });

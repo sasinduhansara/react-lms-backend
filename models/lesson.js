@@ -34,7 +34,6 @@ const lessonSchema = new mongoose.Schema(
     type: {
       type: String,
       enum: ["video", "pdf"],
-      required: true,
     },
     status: {
       type: String,
