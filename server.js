@@ -8,8 +8,6 @@ import departmentRouter from "./routes/departmentRoutes.js";
 import subjectRoutes from "./routes/subjectRoutes.js";
 import newsRouter from "./routes/newsRoutes.js";
 import materialsRouter from "./routes/materialsRoutes.js";
-import lessonRouter from "./routes/lessonRoutes.js";
-import lessonPartRouter from "./routes/lessonPartRoutes.js";
 
 // import { authenticate } from './middleware/auth.js';
 dotenv.config();
@@ -41,8 +39,6 @@ app.use("/api/departments", departmentRouter);
 app.use("/api/subjects", subjectRoutes);
 app.use("/api/news", newsRouter);
 app.use("/api/materials", materialsRouter);
-app.use("/api/lessons", lessonRouter);
-app.use("/api/lesson-parts", lessonPartRouter);
 
 app.listen(5000, (req, res) => {
   console.log("Server is running on port 5000");
