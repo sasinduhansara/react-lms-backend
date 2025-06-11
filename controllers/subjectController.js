@@ -164,8 +164,16 @@ export const deleteSubject = async (req, res) => {
       });
     }
 
-    const { subjectCode } = req.params;
-    const subject = await Subject.findOneAndDelete({ subjectCode });
+    // FIXED: Accept both _id and subjectCode
+    const { id } = req.params; // Changed from subjectCode to id
+    let subject;
+
+    // Try to find by ObjectId first, then by subjectCode
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      subject = await Subject.findByIdAndDelete(id);
+    } else {
+      subject = await Subject.findOneAndDelete({ subjectCode: id });
+    }
 
     if (!subject) {
       return res.status(404).json({ error: "Subject not found" });

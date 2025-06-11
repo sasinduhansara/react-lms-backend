@@ -31,6 +31,6 @@ router.post("/", authenticate, createSubject);
 router.put("/:subjectCode", authenticate, updateSubject);
 
 // DELETE subject
-router.delete("/:subjectCode", authenticate, deleteSubject);
+router.delete("/:id", authenticate, deleteSubject);
 
 export default router;

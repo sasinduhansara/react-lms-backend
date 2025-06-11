@@ -1,6 +1,7 @@
 import Subject from "../models/subject.js";
 import User from "../models/user.js";
 import Lesson from "../models/lesson.js";
+import Material from "../models/materials.js";
 
 // Get lecturer's subjects
 export const getLecturerSubjects = async (req, res) => {
@@ -15,13 +16,11 @@ export const getLecturerSubjects = async (req, res) => {
     res.json(subjects);
   } catch (err) {
     console.error("Error fetching lecturer subjects:", err);
-    res.status(500).json({
-      error: err.message || "Failed to fetch subjects",
-    });
+    res.status(500).json({ error: err.message || "Failed to fetch subjects" });
   }
 };
 
-// Get students enrolled in lecturer's subjects
+// Get students in lecturer's department
 export const getLecturerStudents = async (req, res) => {
   try {
     const { lecturerId } = req.params;
@@ -41,40 +40,30 @@ export const getLecturerStudents = async (req, res) => {
     res.json(students);
   } catch (err) {
     console.error("Error fetching lecturer students:", err);
-    res.status(500).json({
-      error: err.message || "Failed to fetch students",
-    });
+    res.status(500).json({ error: err.message || "Failed to fetch students" });
   }
 };
 
-// Get lecturer's materials (mock data for now)
+// Get lecturer's materials
 export const getLecturerMaterials = async (req, res) => {
   try {
     const { lecturerId } = req.params;
 
     // Get lecturer's subjects first
     const subjects = await Subject.find({ lecturer: lecturerId });
+    const subjectIds = subjects.map((subject) => subject._id);
 
-    // Create mock materials based on subjects
-    const mockMaterials = subjects.map((subject, index) => ({
-      _id: `material_${subject._id}_${index}`,
-      name: `${subject.subjectName} - Lecture Notes.pdf`,
-      subject: subject._id,
-      fileType: "pdf",
-      fileSize: 2048000 + index * 500000,
-      createdAt: new Date(
-        Date.now() - index * 24 * 60 * 60 * 1000
-      ).toISOString(),
-      fileUrl: "#",
-      lecturer: lecturerId,
-    }));
+    // Get materials for lecturer's subjects
+    const materials = await Material.find({
+      subject: { $in: subjectIds },
+    })
+      .populate("subject", "subjectCode subjectName")
+      .sort({ createdAt: -1 });
 
-    res.json(mockMaterials);
+    res.json(materials);
   } catch (err) {
     console.error("Error fetching lecturer materials:", err);
-    res.status(500).json({
-      error: err.message || "Failed to fetch materials",
-    });
+    res.status(500).json({ error: err.message || "Failed to fetch materials" });
   }
 };
 
@@ -83,8 +72,14 @@ export const getLecturerLessons = async (req, res) => {
   try {
     const { lecturerId } = req.params;
 
-    // Find lessons created by this lecturer
-    const lessons = await Lesson.find({ author: lecturerId })
+    // Get lecturer's subjects first
+    const subjects = await Subject.find({ lecturer: lecturerId });
+    const subjectIds = subjects.map((subject) => subject._id);
+
+    // Get lessons for lecturer's subjects
+    const lessons = await Lesson.find({
+      subject: { $in: subjectIds },
+    })
       .populate("subject", "subjectCode subjectName")
       .populate("department", "name departmentId")
       .sort({ createdAt: -1 });
@@ -92,9 +87,7 @@ export const getLecturerLessons = async (req, res) => {
     res.json(lessons);
   } catch (err) {
     console.error("Error fetching lecturer lessons:", err);
-    res.status(500).json({
-      error: err.message || "Failed to fetch lessons",
-    });
+    res.status(500).json({ error: err.message || "Failed to fetch lessons" });
   }
 };
 
@@ -113,16 +106,21 @@ export const getLecturerStats = async (req, res) => {
     const subjectsCount = await Subject.countDocuments({
       lecturer: lecturerId,
     });
-
     const studentsCount = await User.countDocuments({
       role: "student",
       department: lecturer.department,
     });
 
-    const lessonsCount = await Lesson.countDocuments({ author: lecturerId });
+    // Get lecturer's subjects for lessons/materials count
+    const subjects = await Subject.find({ lecturer: lecturerId });
+    const subjectIds = subjects.map((subject) => subject._id);
 
-    // Mock materials count
-    const materialsCount = subjectsCount * 2; // 2 materials per subject
+    const lessonsCount = await Lesson.countDocuments({
+      subject: { $in: subjectIds },
+    });
+    const materialsCount = await Material.countDocuments({
+      subject: { $in: subjectIds },
+    });
 
     res.json({
       totalSubjects: subjectsCount,
@@ -132,8 +130,8 @@ export const getLecturerStats = async (req, res) => {
     });
   } catch (err) {
     console.error("Error fetching lecturer stats:", err);
-    res.status(500).json({
-      error: err.message || "Failed to fetch statistics",
-    });
+    res
+      .status(500)
+      .json({ error: err.message || "Failed to fetch statistics" });
   }
 };

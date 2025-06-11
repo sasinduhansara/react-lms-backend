@@ -47,6 +47,11 @@ const subjectSchema = new mongoose.Schema({
     min: 1,
     max: 10,
   },
+  // ADD THIS FIELD
+  lecturer: {
+    type: String,
+    required: false, // Make it optional initially
+  },
   description: {
     type: String,
     default: "",
@@ -66,10 +71,6 @@ const subjectSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now,
-  },
-  lecturer: {
-    type: String, // lecturer userId
-    required: false,
   },
 });
 

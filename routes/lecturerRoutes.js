@@ -13,7 +13,7 @@ const router = express.Router();
 // Get lecturer's subjects
 router.get("/subjects/:lecturerId", authenticate, getLecturerSubjects);
 
-// Get students enrolled in lecturer's subjects
+// Get lecturer's students
 router.get("/students/:lecturerId", authenticate, getLecturerStudents);
 
 // Get lecturer's materials
