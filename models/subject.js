@@ -67,6 +67,10 @@ const subjectSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  lecturer: {
+    type: String, // lecturer userId
+    required: false,
+  },
 });
 
 subjectSchema.index({ department: 1, year: 1, semester: 1 });
