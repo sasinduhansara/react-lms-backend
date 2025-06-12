@@ -40,9 +40,14 @@ const lessonSchema = new mongoose.Schema(
       enum: ["draft", "published"],
       default: "draft",
     },
+
     author: {
       type: String,
       default: "Admin",
+    },
+    author: {
+      type: String, // userId of the creator
+      required: false,
     },
   },
   {
