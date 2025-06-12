@@ -1,8 +1,9 @@
 import Subject from "../models/subject.js";
 import Department from "../models/department.js";
+import User from "../models/user.js";
 import mongoose from "mongoose";
 
-// Create subject - Admin and Lecturer only
+// Create subject - Admin and Lecturer only with AUTO ASSIGNMENT
 export const createSubject = async (req, res) => {
   try {
     // Check permissions
@@ -20,10 +21,22 @@ export const createSubject = async (req, res) => {
       return res.status(404).json({ error: "Department not found" });
     }
 
-    // Create subject
+    // AUTO ASSIGNMENT: Find lecturer from same department
+    let autoAssignedLecturer = null;
+    const departmentLecturer = await User.findOne({
+      role: "lecturer",
+      department: req.body.departmentId,
+    });
+
+    if (departmentLecturer) {
+      autoAssignedLecturer = departmentLecturer.userId;
+    }
+
+    // Create subject with auto-assigned lecturer
     const subject = await Subject.create({
       ...req.body,
       department: department._id,
+      lecturer: autoAssignedLecturer,
     });
 
     // Populate department details
@@ -155,7 +168,7 @@ export const updateSubject = async (req, res) => {
   }
 };
 
-// Delete subject
+// Delete subject - FIXED
 export const deleteSubject = async (req, res) => {
   try {
     if (!["admin", "lecturer"].includes(req.user.role)) {
@@ -165,7 +178,7 @@ export const deleteSubject = async (req, res) => {
     }
 
     // FIXED: Accept both _id and subjectCode
-    const { id } = req.params; // Changed from subjectCode to id
+    const { id } = req.params;
     let subject;
 
     // Try to find by ObjectId first, then by subjectCode
@@ -178,8 +191,6 @@ export const deleteSubject = async (req, res) => {
     if (!subject) {
       return res.status(404).json({ error: "Subject not found" });
     }
-
-    // TODO: Delete associated materials
 
     res.json({
       message: "Subject deleted successfully",

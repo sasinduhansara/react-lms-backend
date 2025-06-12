@@ -30,7 +30,7 @@ router.post("/", authenticate, createSubject);
 // PUT update subject
 router.put("/:subjectCode", authenticate, updateSubject);
 
-// DELETE subject
+// DELETE subject - FIXED: Changed from subjectCode to id
 router.delete("/:id", authenticate, deleteSubject);
 
 export default router;

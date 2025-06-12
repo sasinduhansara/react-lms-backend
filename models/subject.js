@@ -47,10 +47,10 @@ const subjectSchema = new mongoose.Schema({
     min: 1,
     max: 10,
   },
-  // ADD THIS FIELD
+  // ADDED LECTURER FIELD
   lecturer: {
     type: String,
-    required: false, // Make it optional initially
+    required: false,
   },
   description: {
     type: String,

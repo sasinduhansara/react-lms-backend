@@ -3,6 +3,27 @@ import User from "../models/user.js";
 import Lesson from "../models/lesson.js";
 import Material from "../models/materials.js";
 
+// Get lecturer profile
+export const getLecturerProfile = async (req, res) => {
+  try {
+    const { lecturerId } = req.params;
+
+    // Find lecturer by userId
+    const lecturer = await User.findOne({ userId: lecturerId }).select(
+      "-passwordHash"
+    );
+
+    if (!lecturer) {
+      return res.status(404).json({ error: "Lecturer not found" });
+    }
+
+    res.json(lecturer);
+  } catch (err) {
+    console.error("Error fetching lecturer profile:", err);
+    res.status(500).json({ error: err.message || "Failed to fetch profile" });
+  }
+};
+
 // Get lecturer's subjects
 export const getLecturerSubjects = async (req, res) => {
   try {
@@ -133,5 +154,56 @@ export const getLecturerStats = async (req, res) => {
     res
       .status(500)
       .json({ error: err.message || "Failed to fetch statistics" });
+  }
+};
+
+export const getLecturerNotifications = async (req, res) => {
+  try {
+    const { lecturerId } = req.params;
+
+    // Get lecturer info
+    const lecturer = await User.findOne({ userId: lecturerId });
+    if (!lecturer) {
+      return res.status(404).json({ error: "Lecturer not found" });
+    }
+
+    // Create sample notifications based on lecturer data
+    const notifications = [
+      {
+        _id: "notif1",
+        title: "Welcome to SLIATE LMS",
+        message: `Welcome ${lecturer.firstName}! Your lecturer account is now active.`,
+        senderName: "System Admin",
+        type: "announcement",
+        createdAt: new Date().toISOString(),
+        isRead: false,
+      },
+      {
+        _id: "notif2",
+        title: "Department Update",
+        message: `Important updates for ${lecturer.department} department faculty members.`,
+        senderName: "Academic Office",
+        type: "message",
+        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        isRead: false,
+      },
+      {
+        _id: "notif3",
+        title: "System Maintenance",
+        message:
+          "Scheduled maintenance on Sunday 2:00 AM - 4:00 AM. Plan accordingly.",
+        senderName: "IT Department",
+        type: "system",
+        createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
+        isRead: true,
+      },
+    ];
+
+    res.json(notifications);
+  } catch (err) {
+    console.error("Error fetching lecturer notifications:", err);
+    res
+      .status(500)
+      .json({ error: err.message || "Failed to fetch notifications" });
   }
 };
