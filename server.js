@@ -14,6 +14,7 @@ import lecturerRouter from "./routes/lecturerRoutes.js";
 import marksRouter from "./routes/marksRoutes.js";
 import notificationRouter from "./routes/notificationRoutes.js";
 import settingsRouter from "./routes/settingsRoutes.js";
+import studentRouter from "./routes/studentRoutes.js";
 
 // import { authenticate } from './middleware/auth.js';
 dotenv.config();
@@ -51,6 +52,7 @@ app.use("/api/lecturers", lecturerRouter);
 app.use("/api/marks", marksRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/settings", settingsRouter);
+app.use("/api/students", studentRouter);
 
 app.listen(5000, (req, res) => {
   console.log("Server is running on port 5000");
